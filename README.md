@@ -73,7 +73,7 @@ pip install cachedrift
 cachedrift .                          # scan cwd
 cachedrift src/ --format json         # CI-ready JSON
 cachedrift src/ --min-severity fail   # only the hard failures
-cachedrift src/ --rules CD01 CD07     # pick rules
+cachedrift --rules CD01,CD07 src/     # pick rules (comma separated)
 cachedrift src/ --fail-on warn        # stricter CI gate
 ```
 

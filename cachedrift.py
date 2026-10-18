@@ -212,6 +212,16 @@ def scan(paths: list[Path], root: Path) -> list[Finding]:
     return findings
 
 
+def _rule_ids(values: list[str] | None) -> list[str] | None:
+    """Normalise --rules CD01,CD07 / --rules CD01 --rules CD07 input."""
+    if not values:
+        return None
+    ids: list[str] = []
+    for value in values:
+        ids.extend(part.strip().upper() for part in value.split(",") if part.strip())
+    return ids or None
+
+
 def apply_filters(findings: list[Finding], min_severity: str,
                   rules: list[str] | None) -> list[Finding]:
     min_rank = SEV_ORDER[min_severity]
@@ -258,8 +268,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--format", choices=["text", "json"], default="text")
     ap.add_argument("--min-severity", choices=["fail", "warn", "info"],
                     default="info")
-    ap.add_argument("--rules", nargs="*",
-                    help="only run these rule ids (e.g. CD01 CD07)")
+    ap.add_argument("--rules", action="append", metavar="ID[,ID]",
+                    help="only run these rule ids; comma separated or repeated (e.g. CD01,CD07)")
     ap.add_argument("--fail-on", choices=["fail", "warn", "info"], default="fail",
                     help="severity that produces exit code 2 (default: fail)")
     ap.add_argument("--version", action="version",
@@ -288,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
             uniq.append(t)
 
     findings = scan(uniq, root)
-    findings = apply_filters(findings, args.min_severity, args.rules)
+    findings = apply_filters(findings, args.min_severity, _rule_ids(args.rules))
     print(report(findings, args.format, len(uniq)))
 
     fail_rank = SEV_ORDER[args.fail_on]

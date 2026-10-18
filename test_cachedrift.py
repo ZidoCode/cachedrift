@@ -244,5 +244,24 @@ class TestPerfRegression(unittest.TestCase):
                         f"possible ReDoS: {elapsed:.2f}s on 50k adversarial")
 
 
+class TestRuleSelection(unittest.TestCase):
+    """--rules must not swallow the positional path (silent empty scan)."""
+
+    def test_rules_flag_scans_path(self):
+        import cachedrift as cd
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "app.py"
+            target.write_text('import datetime\nP = f"{datetime.datetime.now()}"\n')
+            self.assertEqual(cd.main(["--rules", "CD01", str(target)]), 2)
+
+    def test_rules_accepts_comma_and_repeat(self):
+        import cachedrift as cd
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "app.py"
+            target.write_text('import datetime\nP = f"{datetime.datetime.now()}"\n')
+            self.assertEqual(cd.main(["--rules", "CD01,CD07", str(target)]), 2)
+            self.assertEqual(cd.main(["--rules", "CD01", "--rules", "CD07", str(target)]), 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
